@@ -3,6 +3,7 @@ import { FollowUpAgent } from './implementations/followUpAgent.js';
 import { ProposalGenerator } from './implementations/proposalGenerator.js';
 import { CloseAssistant } from './implementations/closeAssistant.js';
 import { ManagerAgent } from './implementations/managerAgent.js';
+import { MarketingAgent } from './implementations/marketingAgent.js';
 import { BaseAgent } from './baseAgent.js';
 import { logger } from '../utils/logger.js';
 
@@ -19,6 +20,7 @@ export class AgentOrchestrator {
     this.agents.set('proposal-generator', new ProposalGenerator(logger));
     this.agents.set('close-assistant', new CloseAssistant(logger));
     this.agents.set('manager', new ManagerAgent(logger));
+    this.agents.set('marketing', new MarketingAgent(logger));
 
     logger.info(`Initialized ${this.agents.size} agents`);
   }
@@ -42,4 +44,5 @@ export {
   ProposalGenerator,
   CloseAssistant,
   ManagerAgent,
+  MarketingAgent,
 };
