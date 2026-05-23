@@ -31,6 +31,19 @@ router.post('/', (req: Request, res: Response) => {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (typeof email !== 'string' || !emailRegex.test(email)) {
+      res.status(400).json({ error: 'Invalid email format' });
+      return;
+    }
+
+    // Validate string fields
+    if (typeof name !== 'string' || typeof company !== 'string') {
+      res.status(400).json({ error: 'Name and company must be strings' });
+      return;
+    }
+
     const id = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const lead: Lead = {
       id,

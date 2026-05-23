@@ -18,8 +18,13 @@ router.post('/:agentId/message', async (req: Request, res: Response) => {
     const { agentId } = req.params;
     const { message } = req.body;
 
-    if (!message) {
-      res.status(400).json({ error: 'Message is required' });
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      res.status(400).json({ error: 'Message is required and must be a non-empty string' });
+      return;
+    }
+
+    if (message.length > 10000) {
+      res.status(400).json({ error: 'Message exceeds maximum length of 10000 characters' });
       return;
     }
 

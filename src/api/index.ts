@@ -22,7 +22,7 @@ export function createApp() {
   });
 
   app.use(
-    (err: unknown, _req: express.Request, res: express.Response) => {
+    (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       logger.error(err, 'Unhandled error');
       res.status(500).json({ error: 'Internal server error' });
     }
