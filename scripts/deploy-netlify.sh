@@ -1,247 +1,163 @@
 #!/bin/bash
 
 # AI Sales Closer - Netlify Deployment Script
-# This script handles deployment to Netlify
+# Usage: ./scripts/deploy-netlify.sh [setup|deploy|logs|status]
 
 set -e
 
-# Colors for output
+SITE_NAME="ai-sales-closer"
+SITE_ID="${NETLIFY_SITE_ID}"
+
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
-APP_NAME="ai-sales-closer"
-SITE_NAME="ai-sales-closer"
-
-# Functions
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+function log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
+function log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if Netlify CLI is installed
-check_netlify() {
+function log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+function check_netlify_cli() {
     if ! command -v netlify &> /dev/null; then
-        print_error "Netlify CLI is not installed"
-        print_info "Install with: npm install -g netlify-cli"
+        log_error "Netlify CLI is not installed"
+        log_info "Install with: npm install -g netlify-cli"
         exit 1
     fi
-    print_success "Netlify CLI is installed"
+    log_info "Netlify CLI version: $(netlify --version)"
 }
 
-# Check if user is logged in
-check_auth() {
-    if ! netlify status > /dev/null 2>&1; then
-        print_warning "Not authenticated with Netlify"
-        print_info "Logging in..."
-        netlify login
-    fi
-    print_success "Netlify authentication verified"
-}
-
-# Check git status
-check_git() {
-    if ! git diff-index --quiet HEAD --; then
-        print_warning "There are uncommitted changes"
-        print_info "Commit changes before deployment"
+function check_auth() {
+    if [ ! -f ~/.netlify/state.json ]; then
+        log_error "Not authenticated with Netlify"
+        log_info "Run: netlify login"
         exit 1
     fi
-    print_success "Git status is clean"
 }
 
-# Install dependencies
-install_deps() {
-    print_info "Installing dependencies..."
-    npm install
-    print_success "Dependencies installed"
-}
-
-# Run tests
-run_tests() {
-    print_info "Running tests..."
-    npm run test
-    print_success "Tests passed"
-}
-
-# Run linter
-run_lint() {
-    print_info "Running linter..."
-    npm run lint
-    print_success "Linter checks passed"
-}
-
-# Build project
-build_project() {
-    print_info "Building project..."
-    npm run build
-    print_success "Project built successfully"
-}
-
-# Deploy to Netlify
-deploy_netlify() {
-    print_info "Deploying to Netlify..."
-
-    netlify deploy --prod --dir=dist
-
-    print_success "Deployment to Netlify completed"
-}
-
-# Check deployment status
-check_status() {
-    print_info "Checking deployment status..."
-    netlify status
-
-    print_info "Retrieving deployment URL..."
-    DEPLOYMENT_URL=$(netlify status | grep "Website URL" | awk '{print $NF}')
-
-    if [ -z "$DEPLOYMENT_URL" ]; then
-        print_warning "Could not retrieve deployment URL"
+function setup() {
+    log_info "Setting up Netlify deployment..."
+    
+    check_netlify_cli
+    check_auth
+    
+    # Create or link site
+    if [ -z "$SITE_ID" ]; then
+        log_info "Creating new Netlify site..."
+        netlify init --name "$SITE_NAME" --build-dir=dist --functions=functions
     else
-        print_success "Deployment URL: $DEPLOYMENT_URL"
+        log_info "Linking to existing site..."
+        netlify link --id "$SITE_ID"
+    fi
+    
+    log_info "Creating netlify.toml configuration..."
+    cat > netlify.toml << 'NETLIFYEOF'
+[build]
+  command = "npm run build"
+  functions = "functions"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production]
+  command = "npm run build"
+  environment = { NODE_ENV = "production" }
+
+[context.deploy-preview]
+  command = "npm run build"
+  environment = { NODE_ENV = "staging" }
+
+[context.branch-deploy]
+  command = "npm run build"
+  environment = { NODE_ENV = "development" }
+NETLIFYEOF
+
+    log_info "Netlify setup complete"
+    log_info "Site ID: $(netlify status | grep 'Site ID' || echo 'Unknown')"
+}
+
+function deploy() {
+    log_info "Deploying to Netlify..."
+    
+    check_netlify_cli
+    check_auth
+    
+    # Build
+    log_info "Building application..."
+    npm run build
+    
+    if [ ! -d dist ]; then
+        log_error "Build directory not found"
+        exit 1
+    fi
+    
+    # Deploy
+    log_info "Uploading to Netlify..."
+    netlify deploy --prod --dir=dist
+    
+    if [ $? -eq 0 ]; then
+        log_info "Deployment successful!"
+        netlify status
+    else
+        log_error "Deployment failed"
+        exit 1
     fi
 }
 
-# Test deployment
-test_deployment() {
-    print_info "Testing deployment..."
-
-    DEPLOYMENT_URL=$(netlify status | grep "Website URL" | awk '{print $NF}')
-
-    if [ -z "$DEPLOYMENT_URL" ]; then
-        print_warning "Could not test deployment - URL not available"
-        return
-    fi
-
-    for i in {1..5}; do
-        if curl -s "$DEPLOYMENT_URL/health" > /dev/null 2>&1; then
-            print_success "Health check passed"
-            return 0
-        fi
-
-        if [ $i -lt 5 ]; then
-            print_warning "Health check attempt $i/5 failed, retrying..."
-            sleep 2
-        fi
-    done
-
-    print_warning "Health check failed - deployment may need time to initialize"
+function logs() {
+    log_info "Fetching Netlify logs..."
+    netlify log
 }
 
-# View logs
-view_logs() {
-    print_info "Displaying deployment logs..."
-    netlify logs
+function status() {
+    log_info "Checking Netlify status..."
+    netlify status
 }
 
-# Rollback deployment
-rollback_deployment() {
-    print_info "Rolling back deployment..."
-    netlify rollback
-    print_success "Rollback completed"
-}
+# Main
+case "${1:-deploy}" in
+    setup)
+        setup
+        ;;
+    deploy)
+        deploy
+        ;;
+    logs)
+        logs
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: $0 {setup|deploy|logs|status}"
+        echo ""
+        echo "Commands:"
+        echo "  setup  - Setup Netlify deployment"
+        echo "  deploy - Deploy to Netlify"
+        echo "  logs   - View deployment logs"
+        echo "  status - Check deployment status"
+        exit 1
+        ;;
+esac
 
-# Main script logic
-main() {
-    local action="${1:-deploy}"
-
-    case "$action" in
-        install)
-            print_info "=== Installing Dependencies ==="
-            install_deps
-            ;;
-
-        test)
-            print_info "=== Running Tests ==="
-            run_tests
-            ;;
-
-        lint)
-            print_info "=== Running Linter ==="
-            run_lint
-            ;;
-
-        build)
-            print_info "=== Building Project ==="
-            build_project
-            ;;
-
-        check)
-            print_info "=== Pre-Deployment Checks ==="
-            check_netlify
-            check_auth
-            check_git
-            install_deps
-            run_tests
-            run_lint
-            build_project
-            print_success "All pre-deployment checks passed"
-            ;;
-
-        deploy)
-            print_info "=== Full Deployment to Netlify ==="
-            check_netlify
-            check_auth
-            check_git
-            install_deps
-            run_tests
-            run_lint
-            build_project
-            deploy_netlify
-            check_status
-            test_deployment
-            print_success "Deployment to Netlify completed successfully!"
-            ;;
-
-        status)
-            print_info "=== Deployment Status ==="
-            check_netlify
-            check_auth
-            check_status
-            ;;
-
-        logs)
-            view_logs
-            ;;
-
-        rollback)
-            print_info "=== Rolling Back Deployment ==="
-            check_netlify
-            check_auth
-            rollback_deployment
-            print_success "Rollback completed"
-            ;;
-
-        *)
-            echo "Usage: $0 {install|test|lint|build|check|deploy|status|logs|rollback}"
-            echo ""
-            echo "Commands:"
-            echo "  install    - Install dependencies"
-            echo "  test       - Run tests"
-            echo "  lint       - Run linter"
-            echo "  build      - Build project"
-            echo "  check      - Run all pre-deployment checks"
-            echo "  deploy     - Full deployment (checks + build + deploy)"
-            echo "  status     - Check deployment status"
-            echo "  logs       - View deployment logs"
-            echo "  rollback   - Rollback to previous deployment"
-            exit 1
-            ;;
-    esac
-}
-
-# Run main function
-main "$@"
+log_info "Done!"

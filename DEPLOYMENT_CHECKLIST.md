@@ -1,123 +1,97 @@
-# Deployment Checklist - AI Sales Closer
+# AI Sales Closer - Déploiement Checklist
 
-## Pre-Deployment Verification
+## Pré-Déploiement
 
 ### Code Quality
-- [ ] All tests passing: `npm run test`
-- [ ] ESLint checks passing: `npm run lint`
-- [ ] Build successful: `npm run build`
-- [ ] TypeScript compilation successful: `npm run tsc`
-- [ ] No console errors or warnings
-- [ ] All imports resolved correctly
+- [ ] `npm run lint` - Tous les erreurs ESLint résolues
+- [ ] `npm run type-check` - Pas d'erreurs TypeScript
+- [ ] `npm run test` - Tous les tests passent
+- [ ] `npm run build` - Build sans erreurs
 
-### Git Status
-- [ ] All changes committed: `git status` (clean)
-- [ ] Branch pushed to remote: `git push origin <branch>`
-- [ ] Latest commits visible on GitHub
-- [ ] No merge conflicts
+### Git & Versioning
+- [ ] `git status` - Aucun changement non commité
+- [ ] `git log --oneline -5` - Vérifier l'historique
+- [ ] Tags de version créés correctement
+- [ ] Branche de déploiement (`main` ou `production`) à jour
 
-### Environment Variables
-- [ ] `.env.production` configured
-- [ ] Database connection string valid
-- [ ] API keys configured
-- [ ] Secret keys stored in secure vault
-- [ ] CORS settings correct
-- [ ] Log level appropriate for production
+### Environment & Configuration
+- [ ] Variables d'environnement `.env.production` configurées
+- [ ] Secrets gérés via le gestionnaire de secrets
+- [ ] Base de données PostgreSQL configurée
+- [ ] Clés API vérifées et valides
+- [ ] URLs de callback configurées pour les services externes
 
 ### Database
-- [ ] Migrations up to date: `npm run migrate`
-- [ ] Schema validated
-- [ ] Backups configured
-- [ ] Connection pooling enabled
-- [ ] Database user permissions correct
+- [ ] Migrations de base de données vérifiées
+- [ ] Backup de la base de données existante créé
+- [ ] Scripts de migration testés en environnement staging
+- [ ] Plan de rollback préparé
 
-### Dependencies
-- [ ] All dependencies installed: `npm install`
-- [ ] No vulnerable packages: `npm audit`
-- [ ] Package versions locked in package-lock.json
-- [ ] Node version compatible (v18+)
-
-### Documentation
-- [ ] README.md complete and accurate
-- [ ] API documentation up to date
-- [ ] Architecture documentation reviewed
-- [ ] Deployment guide created
-- [ ] Troubleshooting guide created
-
-### Docker (if using Docker)
-- [ ] Dockerfile builds successfully
-- [ ] Docker image created: `docker build -t ai-sales-closer:latest .`
-- [ ] Container runs without errors
-- [ ] Environment variables passed correctly
-- [ ] Ports mapped correctly
-- [ ] Volume mounts working
+### Infrastructure
+- [ ] Docker image buildable et testable
+- [ ] Netlify/Vercel configs vérifiées
+- [ ] Ressources cloud (RAM, CPU, stockage) disponibles
+- [ ] CDN configuré si applicable
+- [ ] Logs et monitoring configurés
 
 ### Security
-- [ ] Secrets not committed to repository
-- [ ] Environment variables not in code
-- [ ] Authentication tokens rotated
-- [ ] HTTPS enabled
-- [ ] CORS properly configured
-- [ ] Rate limiting enabled
-- [ ] Input validation implemented
-- [ ] SQL injection prevention verified
+- [ ] Pas de secrets en hardcod dans le code
+- [ ] Variables sensibles en `.env` seulement
+- [ ] CORS, CSRF, headers de sécurité configurés
+- [ ] Rate limiting activé
+- [ ] Authentification & autorisation testées
 
-### Monitoring & Logging
-- [ ] Logging configured
-- [ ] Error tracking configured (e.g., Sentry)
-- [ ] Performance monitoring setup
-- [ ] Health check endpoints working
-- [ ] Alerts configured
+### Documentation
+- [ ] README.md à jour
+- [ ] Architecture documentation à jour
+- [ ] API documentation complète
+- [ ] Guides de déploiement prêts
+- [ ] Procédures de rollback documentées
 
-### Deployment Target Setup
-- [ ] Server resources adequate (CPU, RAM, Disk)
-- [ ] Network connectivity verified
-- [ ] Firewall rules configured
-- [ ] SSL/TLS certificates valid
-- [ ] Domain DNS records updated
-- [ ] CDN configured (if applicable)
+### Testing
+- [ ] Tests unitaires passent
+- [ ] Tests d'intégration passent
+- [ ] Tests e2e sur endpoints critiques
+- [ ] Load testing effectué
+- [ ] Tests de sécurité passent
 
-### Testing in Production-Like Environment
-- [ ] Smoke tests passed
-- [ ] Load tests passed
-- [ ] End-to-end tests passed
-- [ ] Database performance acceptable
-- [ ] API response times acceptable
+## Déploiement
 
-### Final Checks
-- [ ] Backup of current production (if applicable)
-- [ ] Rollback plan documented
-- [ ] Deployment team notified
-- [ ] Maintenance window scheduled (if needed)
-- [ ] On-call rotation updated
-- [ ] Status page updated
+### Pre-Deployment Checks
+- [ ] Vérifier la santé de tous les services dépendants
+- [ ] Confirmer que l'équipe est prête
+- [ ] Créer un ticket de déploiement
+- [ ] Notifier les stakeholders
 
-## Post-Deployment Verification
+### Deployment Process
+- [ ] Exécuter `scripts/deploy-docker.sh` ou `scripts/deploy-netlify.sh`
+- [ ] Vérifier les logs de déploiement
+- [ ] Vérifier les health checks
+- [ ] Confirmer que les endpoints répondent
+- [ ] Vérifier les métriques d'application
 
-### Immediate (First 5 minutes)
-- [ ] Application started without errors
-- [ ] Health check endpoints responding
-- [ ] Database connections active
-- [ ] API endpoints responding
-- [ ] No critical errors in logs
+### Post-Deployment
+- [ ] Exécuter les tests de fumée (smoke tests)
+- [ ] Vérifier les logs d'application
+- [ ] Monitorer les erreurs et exceptions
+- [ ] Vérifier les performances (latency, CPU, memory)
+- [ ] Confirmer que les fonctionnalités critiques marchent
+- [ ] Notifier les utilisateurs du déploiement
 
-### Short-term (First hour)
-- [ ] User authentication working
-- [ ] Core features functional
-- [ ] API rate limiting working
-- [ ] Database queries performing well
-- [ ] Error rate normal
+## Rollback (si nécessaire)
 
-### Long-term (First 24 hours)
-- [ ] All features tested by users
-- [ ] No memory leaks observed
-- [ ] Performance metrics stable
-- [ ] No security incidents
-- [ ] Team notified of successful deployment
+- [ ] Identifier le problème
+- [ ] Activer le rollback
+- [ ] Vérifier que le système est revenu stable
+- [ ] Documenter le problème
+- [ ] Planifier une correction
+- [ ] Notifier l'équipe et les utilisateurs
 
-## Deployment Sign-off
+## Post-Deployment (24-48h après)
 
-- **Deployment Date**: ___________
-- **Deployed By**: ___________
-- **Reviewed By**: ___________
-- **Notes**: ___________________________________________
+- [ ] Vérifier les métriques de performance
+- [ ] Vérifier les taux d'erreur
+- [ ] Vérifier les logs pour les anomalies
+- [ ] Collecter le feedback utilisateur
+- [ ] Archiver les logs de déploiement
+- [ ] Mettre à jour la documentation

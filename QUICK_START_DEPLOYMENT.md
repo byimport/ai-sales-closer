@@ -1,139 +1,46 @@
-# Quick Start Deployment - AI Sales Closer
+# AI Sales Closer - Déploiement Rapide
 
-## 5-Minute Docker Deployment
-
+## 1. Setup initial (une fois)
 ```bash
-# 1. Build image
-./scripts/deploy-docker.sh build
-
-# 2. Run container
-./scripts/deploy-docker.sh run
-
-# 3. Verify
-curl http://localhost:3000/health
-```
-
-## 10-Minute Netlify Deployment
-
-```bash
-# 1. Ensure all changes are committed
-git add .
-git commit -m "Ready for production"
-git push
-
-# 2. Run deployment script
-./scripts/deploy-netlify.sh
-
-# 3. Verify deployment
-netlify status
-```
-
-## 10-Minute Vercel Deployment
-
-```bash
-# 1. Ensure all changes are committed
-git add .
-git commit -m "Ready for production"
-git push
-
-# 2. Run deployment script
-./scripts/deploy-vercel.sh
-
-# 3. Verify deployment
-vercel status
-```
-
-## Environment Setup (2 minutes)
-
-```bash
-# Create environment file
+cd /home/user/ai-sales-closer
+npm install
 ./scripts/setup-env.sh
-
-# Or manually
-cp .env.example .env.production
-# Edit .env.production with your values
 ```
 
-## Pre-Deployment Checks (2 minutes)
-
+## 2. Déploiement Docker (Recommandé)
 ```bash
-# Run tests
-npm run test
-
-# Check linting
-npm run lint
-
-# Build
-npm run build
+./scripts/deploy-docker.sh build
+./scripts/deploy-docker.sh run
+# Vérifier: curl http://localhost:3000/api/health
 ```
 
-## Health Check
-
+## 3. Déploiement Netlify
 ```bash
-# Local
-curl http://localhost:3000/health
-
-# Remote (replace URL)
-curl https://your-app-url/health
+./scripts/deploy-netlify.sh deploy
+# Production: https://ai-sales-closer.netlify.app
 ```
 
-## Rollback (1 minute)
-
+## 4. Déploiement Vercel
 ```bash
-# Docker
-docker stop ai-sales-closer
-docker run -d --name ai-sales-closer ... ai-sales-closer:previous-tag
-
-# Netlify
-netlify rollback
-
-# Vercel
-vercel promote <previous-deployment>
+./scripts/deploy-vercel.sh deploy
+# Production: https://ai-sales-closer.vercel.app
 ```
 
-## Important URLs
-
-- **Repository**: https://github.com/yourusername/ai-sales-closer
-- **Netlify**: https://app.netlify.com
-- **Vercel**: https://vercel.com
-- **Docker Hub**: https://hub.docker.com
-
-## Critical Commands
-
+## Commandes utiles
 ```bash
-# Logs
-docker logs ai-sales-closer              # Docker logs
-netlify logs                              # Netlify logs
-vercel logs                               # Vercel logs
-
-# Database
-npm run migrate                           # Run migrations
-npm run db:test                          # Test connection
-
-# Monitoring
-npm run monitor                          # Monitor application
-npm run profile                          # Profile application
+npm run lint       # Vérifier le code
+npm run build      # Compiler TypeScript
+npm run test       # Exécuter les tests
+npm run start      # Démarrer le serveur
 ```
 
-## Common Issues & Fixes
+## Variables d'environnement requises
+- `DATABASE_URL`: Connection string PostgreSQL
+- `OPENAI_API_KEY`: Clé API OpenAI
+- `JWT_SECRET`: Secret JWT
+- `NODE_ENV`: "production"
 
-| Issue | Solution |
-|-------|----------|
-| Port already in use | `lsof -i :3000 && kill -9 <PID>` |
-| Database connection failed | Check `DATABASE_URL` env var |
-| Docker not found | Install Docker Desktop |
-| Build failed | `npm install && npm run build` |
-| Tests failing | `npm run test -- --verbose` |
-
-## Success Criteria
-
-- [ ] Application starts without errors
-- [ ] Health endpoint responds `{"status": "ok"}`
-- [ ] Database connection successful
-- [ ] All API endpoints accessible
-- [ ] No critical errors in logs
-- [ ] Performance metrics acceptable
-
----
-
-**Need help?** See DEPLOYMENT_GUIDE.md or TROUBLESHOOTING.md
+## Support rapide
+- Docker: `docker logs <container>`
+- Netlify: `netlify log`
+- Vercel: `vercel log`
